@@ -1,0 +1,45 @@
+### General ###
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.db
+*.tmp
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### Eclipse ###
+.classpath
+.project
+.settings/
+bin/
+
+### Gradle ###
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+### Maven ###
+.mvn/
+target/
+
+### Logs ###
+logs/
+*.log
+
+### Spring Boot ###
+src/main/resources/application-*.yml
+!src/main/resources/application.yml
+
+### OS-specific ###
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
