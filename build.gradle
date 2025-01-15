@@ -1,0 +1,94 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.balsamic'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // springBoot web, JPA
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    testImplementation 'org.springframework:spring-test' //2024.11.22 : SUH : MockMultipartFile 사용
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+
+    // PostgreSQL
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // cache
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    // swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+    // Http
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+    implementation 'org.jsoup:jsoup:1.15.3'
+
+    // JavaNetCookieJar
+    implementation 'com.squareup.okhttp3:okhttp-urlconnection:4.9.3'
+
+    // HttpLoggingInterceptor
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.3'
+
+    // ftp
+    implementation 'commons-net:commons-net:3.8.0'
+
+    // Apache Commons Pool2
+    implementation 'org.apache.commons:commons-pool2:2.11.1'
+
+    // Thymeleaf
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // Spring Boot DevTools
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.redisson:redisson-spring-boot-starter:3.20.0'
+
+    // WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // Stomp
+    implementation 'org.webjars:stomp-websocket:2.3.4'
+
+    // Socket JS
+    implementation 'org.webjars:sockjs-client:1.5.1'
+
+    // Docker Java API 관련 의존성들
+    implementation 'com.github.docker-java:docker-java:3.3.0'
+    implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.0'
+    implementation 'com.github.docker-java:docker-java-transport-okhttp:3.3.0'
+    implementation 'com.github.docker-java:docker-java-transport:3.3.0'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

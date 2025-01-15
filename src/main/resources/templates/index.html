@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Docker Monitor</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<div class="ui container">
+  <h1>Docker Container Monitor</h1>
+  <div id="containerStats" class="ui cards"></div>
+</div>
+
+<script th:inline="javascript">
+  const socket = new SockJS('/ws-docker-monitor');
+  const stompClient = Stomp.over(socket);
+
+  stompClient.connect({}, function() {
+    stompClient.subscribe('/topic/stats', function(response) {
+      const stats = JSON.parse(response.body);
+      updateContainerStats(stats);
+    });
+  });
+
+  function updateContainerStats(stats) {
+    const containerStats = document.getElementById('containerStats');
+    containerStats.innerHTML = '';
+
+    stats.forEach(stat => {
+      containerStats.innerHTML += `
+                    <div class="ui card">
+                        <div class="content">
+                            <div class="header">${stat.name}</div>
+                            <div class="meta">${stat.containerId}</div>
+                            <div class="description">
+                                <p>CPU Usage: ${stat.cpuUsage}%</p>
+                                <p>Memory Usage: ${formatBytes(stat.memoryUsage)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+    });
+  }
+
+  function formatBytes(bytes) {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Byte';
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    return Math.round(100 * (bytes / Math.pow(1024, i))) / 100 + ' ' + sizes[i];
+  }
+</script>
+</body>
+</html>

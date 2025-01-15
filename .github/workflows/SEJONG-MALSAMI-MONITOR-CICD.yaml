@@ -1,0 +1,95 @@
+name: SEJONG-MALSAMI-MONITOR-CICD
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # application-prod.yml 파일 생성
+      - name: Create application-prod.yml from secret
+        run: |
+          echo "Creating application-prod.yml..."
+          echo "${{ secrets.APPLICATION_PROD_YML }}" > ./src/main/resources/application-prod.yml
+          echo "application-prod.yml created successfully"
+
+      # prod 프로파일 활성화하여 빌드
+      - name: Build with Gradle
+        run: |
+          echo "Starting Gradle build with prod profile..."
+          ./gradlew clean build -x test -Dspring.profiles.active=prod
+          echo "Gradle build completed successfully"
+
+      - name: Docker setup
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sejong-malsami-monitor:${{ github.ref_name }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/sejong-malsami-monitor:cache
+          cache-to: type=inline
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 2022
+          script: |
+            set -e
+            export PATH=$PATH:/usr/local/bin
+            export PW=${{ secrets.SERVER_PASSWORD }}
+            
+            CONTAINER_NAME="sejong-malsami-monitor"
+            
+            echo "도커 이미지 풀: ${{ secrets.DOCKERHUB_USERNAME }}/sejong-malsami-monitor:main"
+            echo $PW | sudo -S docker pull ${{ secrets.DOCKERHUB_USERNAME }}/sejong-malsami-monitor:main
+            
+            echo "컨테이너 존재 여부 확인 중..."
+            if sudo docker ps -a --format '{{.Names}}' | grep -Eq "^${CONTAINER_NAME}\$"; then
+              echo "컨테이너가 존재합니다. 중지 및 삭제 중..."
+              echo $PW | sudo -S docker rm -f $CONTAINER_NAME
+            fi
+            
+            echo "새로운 컨테이너 실행 중..."
+            echo $PW | sudo -S docker run -d \
+              --name $CONTAINER_NAME \
+              --network sejong-malsami-network \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v /volume1/projects/sejong-malsami/monitor-logs:/app/logs \
+              -e TZ=Asia/Seoul \
+              -e "SPRING_PROFILES_ACTIVE=prod" \
+              -v /etc/localtime:/etc/localtime:ro \
+              -p 8089:8089 \
+              ${{ secrets.DOCKERHUB_USERNAME }}/sejong-malsami-monitor:main
+            
+            echo "배포가 성공적으로 완료되었습니다."
