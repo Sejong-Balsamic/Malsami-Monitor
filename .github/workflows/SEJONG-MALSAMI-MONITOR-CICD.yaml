@@ -84,10 +84,10 @@ jobs:
             echo $PW | sudo -S docker run -d \
               --name $CONTAINER_NAME \
               --network sejong-malsami-network \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              -v /volume1/projects/sejong-malsami/monitor-logs:/app/logs \
-              -e TZ=Asia/Seoul \
               -e "SPRING_PROFILES_ACTIVE=prod" \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v /volume1/projects/sejong-malsami:/mnt/sejong-malsami \
+              -e TZ=Asia/Seoul \
               -v /etc/localtime:/etc/localtime:ro \
               -p 8089:8089 \
               ${{ secrets.DOCKERHUB_USERNAME }}/sejong-malsami-monitor:main
