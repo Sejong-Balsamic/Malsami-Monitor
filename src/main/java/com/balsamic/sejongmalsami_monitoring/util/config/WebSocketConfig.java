@@ -18,7 +18,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
     registry.addEndpoint("/ws-docker-monitor")
-        .setAllowedOrigins("*")
-        .withSockJS();
+        .setAllowedOriginPatterns("*")
+        .withSockJS()
+        .setWebSocketEnabled(true)
+        .setHeartbeatTime(25000);
   }
 }

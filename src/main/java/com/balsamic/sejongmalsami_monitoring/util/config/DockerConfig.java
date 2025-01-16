@@ -15,6 +15,9 @@ public class DockerConfig {
   public DockerClient dockerClient() {
     DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
         .withDockerHost("unix:///var/run/docker.sock")
+        .withDockerTlsVerify(false)
+        .withDockerConfig("/root/.docker")  // Docker config 위치 지정
+        .withApiVersion("1.41")  // Docker API 버전 명시
         .build();
 
     return DockerClientBuilder.getInstance(config)

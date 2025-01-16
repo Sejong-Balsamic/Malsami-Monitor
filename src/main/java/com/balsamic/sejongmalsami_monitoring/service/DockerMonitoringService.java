@@ -6,7 +6,9 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Statistics;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -15,34 +17,40 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class DockerMonitoringService {
+
   private final DockerClient dockerClient;
+  private static final String TARGET_NETWORK = "sejong-malsami-network";
 
   public List<ContainerStats> getContainersStats() {
     List<Container> containers = dockerClient.listContainersCmd()
         .withShowAll(true)
+        .withNetworkFilter(Collections.singleton(TARGET_NETWORK))  // 특정 네트워크의 컨테이너만 필터링
         .exec();
 
     return containers.stream()
-        .map(container -> {
-          StatsResultCallback statsCallback = new StatsResultCallback();
-          try {
-            dockerClient.statsCmd(container.getId())
-                .exec(statsCallback);
-            Statistics stats = statsCallback.getStatistics();
-            // 1초 후에도 응답이 없으면 타임아웃
-            statsCallback.awaitCompletion(1, TimeUnit.SECONDS);
-
-            return ContainerStats.builder()
-                .containerId(container.getId())
-                .name(container.getNames()[0])
-                .cpuUsage(calculateCpuUsage(stats))
-                .memoryUsage(calculateMemoryUsage(stats))
-                .build();
-          } catch (InterruptedException e) {
-            throw new RuntimeException("Failed to get container stats", e);
-          }
-        })
+        .map(this::getContainerStats)
+        .filter(Objects::nonNull)
         .collect(Collectors.toList());
+  }
+
+  private ContainerStats getContainerStats(Container container) {
+    StatsResultCallback statsCallback = new StatsResultCallback();
+    try {
+      dockerClient.statsCmd(container.getId()).exec(statsCallback);
+      Statistics stats = statsCallback.getStatistics();
+      statsCallback.awaitCompletion(1, TimeUnit.SECONDS);
+
+      return ContainerStats.builder()
+          .containerId(container.getId())
+          .name(container.getNames()[0].replaceFirst("^/", ""))  // 컨테이너 이름에서 앞의 '/' 제거
+          .cpuUsage(calculateCpuUsage(stats))
+          .memoryUsage(calculateMemoryUsage(stats))
+          .status(container.getStatus())
+          .build();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return null;
+    }
   }
 
   private static class StatsResultCallback extends ResultCallback.Adapter<Statistics> {

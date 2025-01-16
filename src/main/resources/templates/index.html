@@ -28,18 +28,32 @@
     containerStats.innerHTML = '';
 
     stats.forEach(stat => {
+      const statusColor = stat.status.toLowerCase().includes('up') ? 'green' : 'red';
+
       containerStats.innerHTML += `
-                    <div class="ui card">
-                        <div class="content">
-                            <div class="header">${stat.name}</div>
-                            <div class="meta">${stat.containerId}</div>
-                            <div class="description">
-                                <p>CPU Usage: ${stat.cpuUsage}%</p>
-                                <p>Memory Usage: ${formatBytes(stat.memoryUsage)}</p>
-                            </div>
-                        </div>
+            <div class="ui card">
+                <div class="content">
+                    <div class="header">${stat.name}</div>
+                    <div class="meta">
+                        <span class="ui ${statusColor} label">${stat.status}</span>
                     </div>
-                `;
+                    <div class="description">
+                        <p>CPU Usage: ${stat.cpuUsage.toFixed(2)}%</p>
+                        <p>Memory Usage: ${formatBytes(stat.memoryUsage)}</p>
+                        <p>Image: ${stat.image}</p>
+                        <p>Network: ${stat.network}</p>
+                    </div>
+                </div>
+                <div class="extra content">
+                    <button class="ui button" onclick="restartContainer('${stat.containerId}')">
+                        Restart
+                    </button>
+                    <button class="ui button" onclick="viewLogs('${stat.containerId}')">
+                        View Logs
+                    </button>
+                </div>
+            </div>
+        `;
     });
   }
 
