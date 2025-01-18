@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class DockerMonitoringService {
+public class DockerAPIMonitoringService {
 
   private final DockerClient dockerClient;
   private static final String TARGET_NETWORK = "sejong-malsami-network";
@@ -43,8 +43,6 @@ public class DockerMonitoringService {
       return ContainerStats.builder()
           .containerId(container.getId())
           .name(container.getNames()[0].replaceFirst("^/", ""))  // 컨테이너 이름에서 앞의 '/' 제거
-          .cpuUsage(calculateCpuUsage(stats))
-          .memoryUsage(calculateMemoryUsage(stats))
           .status(container.getStatus())
           .build();
     } catch (InterruptedException e) {

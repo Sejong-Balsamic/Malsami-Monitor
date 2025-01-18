@@ -1,7 +1,7 @@
 package com.balsamic.sejongmalsami_monitoring.controller;
 
 import com.balsamic.sejongmalsami_monitoring.object.ContainerStats;
-import com.balsamic.sejongmalsami_monitoring.service.DockerMonitoringService;
+import com.balsamic.sejongmalsami_monitoring.service.DockerAPIMonitoringService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -10,8 +10,8 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 @RequiredArgsConstructor
-public class DockerStatsController {
-  private final DockerMonitoringService monitoringService;
+public class DockerAPIStatsController {
+  private final DockerAPIMonitoringService monitoringService;
   private final SimpMessagingTemplate messagingTemplate;
 
   @Scheduled(fixedRate = 5000)
