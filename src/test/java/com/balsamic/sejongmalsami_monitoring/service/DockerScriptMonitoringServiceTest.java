@@ -2,6 +2,7 @@ package com.balsamic.sejongmalsami_monitoring.service;
 
 import static com.balsamic.sejongmalsami_monitoring.util.log.LogUtil.*;
 
+import com.balsamic.sejongmalsami_monitoring.object.DockerResponse;
 import com.balsamic.sejongmalsami_monitoring.object.constants.DockerCmdOption;
 import com.balsamic.sejongmalsami_monitoring.util.log.LogUtil;
 import java.util.HashMap;
@@ -85,8 +86,8 @@ class DockerScriptMonitoringServiceTest {
   }
 
   public void listAllContainers_테스트() {
-    List<Map<String, Object>> allContainers = dockerScriptMonitoringService.listAllContainers();
-    superLog(allContainers);
+    DockerResponse dockerResponse = dockerScriptMonitoringService.listAllContainers();
+    superLog(dockerResponse);
   }
 
   public void listAllImages_테스트(){
@@ -132,8 +133,8 @@ class DockerScriptMonitoringServiceTest {
     options.put(DockerCmdOption.FILTER, "status=running");
     options.put(DockerCmdOption.FORMAT, "{{json .}}");
 
-    List<Map<String, Object>> allContainers = dockerScriptMonitoringService.listAllContainers(options);
-    superLog(allContainers);
+    DockerResponse dockerResponse = dockerScriptMonitoringService.listAllContainers(options);
+    superLog(dockerResponse);
   }
 
   public void listAllImages_withOptions_테스트() {

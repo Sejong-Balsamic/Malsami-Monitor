@@ -1,68 +1,235 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-  <title>Docker Monitor</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-</head>
-<body>
-<div class="ui container">
-  <h1>Docker Container Monitor</h1>
-  <div id="containerStats" class="ui cards"></div>
+<head th:replace="fragments/header :: head(title='Dashboard')"></head>
+<style>
+  .monospace {
+    font-family: monospace;
+  }
+
+  .ui.cards > .card {
+    margin: 0.5em;
+    width: calc(33.33% - 1em);
+  }
+
+  @media only screen and (max-width: 767px) {
+    .ui.cards > .card {
+      width: calc(100% - 1em);
+    }
+  }
+
+  .ui.very.basic.table td {
+    padding: 0.3em 0;
+  }
+</style>
+<body class="dashboard-page">
+<div th:replace="fragments/header :: header"></div>
+
+<div class="ui container u-margin-vertical-large u-padding-horizontal-medium">
+
+  <!-- ===================== Docker Containers Monitor Section ===================== -->
+  <div class="ui segment">
+    <h3 class="ui header">
+      <i class="docker icon"></i>
+      Docker Containers
+    </h3>
+
+    <div>
+      <span id="dockerStatus">WebSocket 연결 중...</span>
+    </div>
+
+    <!-- 컨테이너 카드를 렌더링할 위치 -->
+    <div class="ui cards" id="dockerStatsContainer" style="margin-top: 1em;"></div>
+  </div>
+  <!-- ===================== End Docker Containers Monitor ===================== -->
+
 </div>
 
+<div th:replace="fragments/footer :: footer"></div>
+
+<!-- WebSocket + STOMP JS 코드 -->
 <script th:inline="javascript">
   const socket = new SockJS('/ws-docker-monitor');
   const stompClient = Stomp.over(socket);
+  stompClient.debug = function(str) {
+    console.log(str);
+  };
 
-  stompClient.connect({}, function() {
-    stompClient.subscribe('/topic/stats', function(response) {
-      const stats = JSON.parse(response.body);
-      updateContainerStats(stats);
+  stompClient.connect({}, function () {
+    console.log("WebSocket 연결 성공!");
+    document.getElementById('dockerStatus').textContent = "🟢 WebSocket 연결됨";
+    document.getElementById('dockerStatus').className = "ui green label";
+
+    stompClient.subscribe('/topic/stats', function (message) {
+      console.log("메시지 수신:", message);
+      console.log("메시지 내용:", message.body);
+
+      try {
+        const dockerResponse = JSON.parse(message.body);
+        console.log("파싱된 데이터:", dockerResponse);
+
+        if (!dockerResponse.dockerPsContainerDtos) {
+          console.warn("dockerPsContainerDtos가 없습니다");
+          return;
+        }
+
+        if (dockerResponse.dockerPsContainerDtos.length === 0) {
+          console.log("컨테이너 목록이 비어있습니다");
+          const containerDiv = document.getElementById('dockerStatsContainer');
+          containerDiv.innerHTML = '<div class="ui warning message">컨테이너가 없습니다.</div>';
+          return;
+        }
+
+        console.log(`${dockerResponse.dockerPsContainerDtos.length}개의 컨테이너 정보를 표시합니다`);
+        updateDockerContainers(dockerResponse);
+      } catch (error) {
+        console.error("메시지 처리 중 에러 발생:", error);
+        console.error("원본 메시지:", message.body);
+      }
     });
+  }, function (error) {
+    console.error("WebSocket 연결 실패:", error);
+    document.getElementById('dockerStatus').textContent = "🔴 WebSocket 연결 실패: " + error;
+    document.getElementById('dockerStatus').className = "ui red label";
   });
 
-  function updateContainerStats(stats) {
-    const containerStats = document.getElementById('containerStats');
-    containerStats.innerHTML = '';
-
-    stats.forEach(stat => {
-      const statusColor = stat.status.toLowerCase().includes('up') ? 'green' : 'red';
-
-      containerStats.innerHTML += `
-            <div class="ui card">
-                <div class="content">
-                    <div class="header">${stat.name}</div>
-                    <div class="meta">
-                        <span class="ui ${statusColor} label">${stat.status}</span>
-                    </div>
-                    <div class="description">
-                        <p>CPU Usage: ${stat.cpuUsage.toFixed(2)}%</p>
-                        <p>Memory Usage: ${formatBytes(stat.memoryUsage)}</p>
-                        <p>Image: ${stat.image}</p>
-                        <p>Network: ${stat.network}</p>
-                    </div>
-                </div>
-                <div class="extra content">
-                    <button class="ui button" onclick="restartContainer('${stat.containerId}')">
-                        Restart
-                    </button>
-                    <button class="ui button" onclick="viewLogs('${stat.containerId}')">
-                        View Logs
-                    </button>
-                </div>
-            </div>
-        `;
-    });
+  function getStatusEmoji(status) {
+    if (status.toLowerCase().includes('up')) {
+      return '🟢';
+    }
+    if (status.toLowerCase().includes('exited')) {
+      return '🔴';
+    }
+    if (status.toLowerCase().includes('created')) {
+      return '🟡';
+    }
+    if (status.toLowerCase().includes('restarting')) {
+      return '🔄';
+    }
+    return '❔';
   }
 
-  function formatBytes(bytes) {
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    if (bytes === 0) return '0 Byte';
-    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-    return Math.round(100 * (bytes / Math.pow(1024, i))) / 100 + ' ' + sizes[i];
+  function getStatusColor(status) {
+    // status가 undefined일 경우 기본값 처리
+    if (!status) {
+      console.warn("상태 정보가 없습니다:", status);
+      return 'grey';
+    }
+
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('up')) {
+      return 'green';
+    }
+    if (statusLower.includes('exited')) {
+      return 'red';
+    }
+    if (statusLower.includes('created')) {
+      return 'yellow';
+    }
+    if (statusLower.includes('restarting')) {
+      return 'orange';
+    }
+    return 'grey';
+  }
+
+  function formatPorts(ports) {
+    if (!ports || ports === '') {
+      return '없음';
+    }
+    return ports.split(',').join('<br>');
+  }
+
+  function updateDockerContainers(dockerResponse) {
+    try {
+      const containerList = dockerResponse.dockerPsContainerDtos || [];
+      console.log("처리할 컨테이너 개수:", containerList.length);
+
+      const containerDiv = document.getElementById('dockerStatsContainer');
+      if (!containerDiv) {
+        console.error("컨테이너 div를 찾을 수 없습니다!");
+        return;
+      }
+
+      containerDiv.innerHTML = '';
+
+      containerList.forEach(container => {
+        console.log("컨테이너 처리:", container);
+
+        // null check 추가
+        const status = container.Status || container.State || 'Unknown';
+        const statusColor = getStatusColor(status);
+        const statusEmoji = getStatusEmoji(status);
+        const containerName = container.Names ? container.Names.replace(/^\//, '') : 'Unknown';
+
+        const cardHTML = `
+        <div class="ui ${statusColor} card">
+          <div class="content">
+            <div class="header">
+              ${statusEmoji} ${containerName}
+            </div>
+            <div class="meta">
+              <span class="ui ${statusColor} label">
+                ${status}
+              </span>
+            </div>
+            <div class="description">
+              <table class="ui very basic compact table">
+                <tbody>
+                  <tr>
+                    <td><i class="id card outline icon"></i> ID</td>
+                    <td class="monospace">${container.ID ? container.ID.substring(0, 12) : 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td><i class="docker icon"></i> Image</td>
+                    <td>${container.Image || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td><i class="clock outline icon"></i> Created</td>
+                    <td>${container.CreatedAt || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td><i class="plug icon"></i> Ports</td>
+                    <td>${formatPorts(container.Ports)}</td>
+                  </tr>
+                  <tr>
+                    <td><i class="hdd outline icon"></i> Size</td>
+                    <td>${container.Size || '정보 없음'}</td>
+                  </tr>
+                  <tr>
+                    <td><i class="clock outline icon"></i> Uptime</td>
+                    <td>${container.RunningFor || 'N/A'}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="extra content">
+            <div class="ui two buttons">
+              <button class="ui basic green button" onclick="controlContainer('start', '${container.ID}')"
+                      ${status.toLowerCase().includes('up') ? 'disabled' : ''}>
+                <i class="play icon"></i> Start
+              </button>
+              <button class="ui basic red button" onclick="controlContainer('stop', '${container.ID}')"
+                      ${!status.toLowerCase().includes('up') ? 'disabled' : ''}>
+                <i class="stop icon"></i> Stop
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+        containerDiv.insertAdjacentHTML('beforeend', cardHTML);
+      });
+    } catch (error) {
+      console.error("컨테이너 업데이트 중 에러 발생:", error);
+    }
+  }
+
+  // 컨테이너 제어 함수 (추후 구현 예정)
+  function controlContainer(action, containerId) {
+    console.log(`Container ${action} requested for ID: ${containerId}`);
+    // TODO: WebSocket을 통해 서버에 컨테이너 제어 요청 전송
   }
 </script>
+
 </body>
 </html>

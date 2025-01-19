@@ -1,5 +1,7 @@
 package com.balsamic.sejongmalsami_monitoring.service;
 
+import com.balsamic.sejongmalsami_monitoring.object.DockerPsContainerDto;
+import com.balsamic.sejongmalsami_monitoring.object.DockerResponse;
 import com.balsamic.sejongmalsami_monitoring.object.constants.DockerCmdOption;
 import com.balsamic.sejongmalsami_monitoring.util.ssh.SshCommandExecutor;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -114,7 +116,7 @@ public class DockerScriptMonitoringService {
    * docker_info.sh ps
    * 모든 컨테이너 목록 (docker ps [OPTIONS]) - Raw JSON
    */
-  public List<Map<String, Object>> listAllContainers() {
+  public DockerResponse listAllContainers() {
     return listAllContainers(null);
   }
 
@@ -122,19 +124,46 @@ public class DockerScriptMonitoringService {
    * docker_info.sh ps [OPTIONS...]
    * 모든 컨테이너 목록 (docker ps [OPTIONS]) - 옵션 지원 버전
    */
-  public List<Map<String, Object>> listAllContainers(Map<DockerCmdOption, String> options) {
+  public DockerResponse listAllContainers(Map<DockerCmdOption, String> options) {
     try {
-      // 예: "/path/to/docker_info.sh ps -a"
+      // 명령어 생성
       String command = dockerInfoScriptPath
           + " ps"
           + (options != null ? buildOptionsString(options) : "");
+      log.info("[Docker 컨테이너 조회] 실행할 명령어: {}", command);
 
+      // SSH 명령어 실행
+      log.info("[Docker 컨테이너 조회] SSH 명령어 실행 시작");
       String jsonOutput = sshCommandExecutor.executeCommandWithSudoStdin(command);
-      // docker ps --format '{{json .}}' | jq -s . => List<Map<String, Object>>
-      return objectMapper.readValue(jsonOutput, new TypeReference<>() {});
+      log.info("[Docker 컨테이너 조회] SSH 실행 결과: {}", jsonOutput);
+
+      // JSON 파싱
+      log.info("[Docker 컨테이너 조회] JSON 파싱 시작");
+      List<DockerPsContainerDto> dockerPsContainerDtos = objectMapper.readValue(jsonOutput,
+          new TypeReference<List<DockerPsContainerDto>>() {
+          });
+      log.info("[Docker 컨테이너 조회] 파싱된 컨테이너 개수: {}", dockerPsContainerDtos.size());
+
+      // 각 컨테이너 정보 로깅
+      dockerPsContainerDtos.forEach(container ->
+          log.info("[Docker 컨테이너 정보] 이름: {}, 상태: {}, ID: {}",
+              container.getNames(),
+              container.getStatus(),
+              container.getId())
+      );
+
+      // 응답 객체 생성
+      DockerResponse response = DockerResponse.builder()
+          .dockerPsContainerDtos(dockerPsContainerDtos)
+          .build();
+      log.info("[Docker 컨테이너 조회] 응답 객체 생성 완료");
+
+      return response;
+
     } catch (Exception e) {
-      log.error("[listAllContainers] Failed to list containers", e);
-      return Collections.emptyList();
+      log.error("[Docker 컨테이너 조회 실패] 에러 발생: ", e);
+      log.error("[Docker 컨테이너 조회 실패] 에러 메시지: {}", e.getMessage());
+      return DockerResponse.builder().build();
     }
   }
 
