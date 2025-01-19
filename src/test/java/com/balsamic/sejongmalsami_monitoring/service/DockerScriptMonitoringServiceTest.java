@@ -20,9 +20,8 @@ class DockerScriptMonitoringServiceTest {
 
   @Test
   public void mainTest() {
-    // 기존 테스트 주석 해제 및 새로운 테스트 추가
-    lineLog("getContainerRawInfo_테스트");
-    timeLog(this::getContainerRawInfo_테스트);
+//    lineLog("getContainerRawInfo_테스트");
+//    timeLog(this::getContainerRawInfo_테스트);
 
 //    lineLog("getContainerRawInfo_withOptions_테스트");
 //    timeLog(this::getContainerRawInfo_withOptions_테스트);
@@ -33,11 +32,11 @@ class DockerScriptMonitoringServiceTest {
 //    lineLog("getImageRawInfo_withOptions_테스트");
 //    timeLog(this::getImageRawInfo_withOptions_테스트);
 //
-//    lineLog("listAllContainers_테스트");
-//    timeLog(this::listAllContainers_테스트);
-//
-//    lineLog("listAllContainers_withOptions_테스트");
-//    timeLog(this::listAllContainers_withOptions_테스트);
+    lineLog("listAllContainers_테스트");
+    timeLog(this::listAllContainers_테스트);
+
+    lineLog("listAllContainers_withOptions_테스트");
+    timeLog(this::listAllContainers_withOptions_테스트);
 //
 //    lineLog("listAllImages_테스트");
 //    timeLog(this::listAllImages_테스트);
