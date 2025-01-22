@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head(title='Dashboard')"></head>
+<body class="dashboard-page">
+<div th:replace="fragments/header :: header"></div>
+
+<div class="ui container">
+  <!-- WebSocket 연결 상태 -->
+  <div class="ui segment">
+    <h3 class="ui header">서버 상태</h3>
+    <p id="dockerStatus">WebSocket 연결 상태: 확인 중...</p>
+  </div>
+
+  <!-- Docker Containers -->
+  <div class="ui segment">
+    <h3 class="ui header">Docker Containers</h3>
+    <div class="ui cards" id="dockerStatsContainer"></div>
+  </div>
+</div>
+
+<div th:replace="fragments/footer :: footer"></div>
+
+<!-- JS -->
+<script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>
