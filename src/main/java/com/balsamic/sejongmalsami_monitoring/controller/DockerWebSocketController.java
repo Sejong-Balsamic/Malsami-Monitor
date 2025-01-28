@@ -1,16 +1,15 @@
 package com.balsamic.sejongmalsami_monitoring.controller;
 
-import com.balsamic.sejongmalsami_monitoring.object.ContainerStats;
 import com.balsamic.sejongmalsami_monitoring.object.DockerResponse;
-import com.balsamic.sejongmalsami_monitoring.service.DockerAPIMonitoringService;
+import com.balsamic.sejongmalsami_monitoring.object.constants.DockerCmdOption;
 import com.balsamic.sejongmalsami_monitoring.service.DockerScriptMonitoringService;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
-
-import java.util.List;
 
 @Controller
 @Slf4j
@@ -27,7 +26,11 @@ public class DockerWebSocketController {
   public void sendContainerStats() {
     try {
       log.info("Docker 컨테이너 정보 조회 시작");
-      DockerResponse dockerResponse = dockerScriptMonitoringService.listAllContainers();
+
+      Map<DockerCmdOption,String> listAllContainersOption = new HashMap<>();
+      listAllContainersOption.put(DockerCmdOption.ALL, "");
+      DockerResponse dockerResponse
+          = dockerScriptMonitoringService.listAllContainers(listAllContainersOption);
 
       if (dockerResponse == null) {
         log.warn("Docker 응답이 null입니다");

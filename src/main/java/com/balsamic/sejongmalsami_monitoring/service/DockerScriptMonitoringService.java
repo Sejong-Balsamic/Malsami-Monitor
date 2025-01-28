@@ -116,7 +116,7 @@ public class DockerScriptMonitoringService {
    * docker_info.sh ps
    * 모든 컨테이너 목록 (docker ps [OPTIONS]) - Raw JSON
    */
-  public DockerResponse listAllContainers() {
+  public DockerResponse listAllActiveContainers() {
     return listAllContainers(null);
   }
 

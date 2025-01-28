@@ -4,7 +4,6 @@ import static com.balsamic.sejongmalsami_monitoring.util.log.LogUtil.*;
 
 import com.balsamic.sejongmalsami_monitoring.object.DockerResponse;
 import com.balsamic.sejongmalsami_monitoring.object.constants.DockerCmdOption;
-import com.balsamic.sejongmalsami_monitoring.util.log.LogUtil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +33,10 @@ class DockerScriptMonitoringServiceTest {
 //    timeLog(this::getImageRawInfo_withOptions_테스트);
 //
     lineLog("listAllContainers_테스트");
-    timeLog(this::listAllContainers_테스트);
+    timeLog(this::listAllActiveContainers_테스트);
 
     lineLog("listAllContainers_withOptions_테스트");
-    timeLog(this::listAllContainers_withOptions_테스트);
+    timeLog(this::listAllActiveContainers_withOptions_테스트);
 //
 //    lineLog("listAllImages_테스트");
 //    timeLog(this::listAllImages_테스트);
@@ -85,7 +84,7 @@ class DockerScriptMonitoringServiceTest {
     superLog(imageRawInfo);
   }
 
-  public void listAllContainers_테스트() {
+  public void listAllActiveContainers_테스트() {
     DockerResponse dockerResponse = dockerScriptMonitoringService.listAllContainers();
     superLog(dockerResponse);
   }
@@ -127,7 +126,7 @@ class DockerScriptMonitoringServiceTest {
     superLog(imageRawInfo);
   }
 
-  public void listAllContainers_withOptions_테스트() {
+  public void listAllActiveContainers_withOptions_테스트() {
     Map<DockerCmdOption, String> options = new HashMap<>();
     options.put(DockerCmdOption.ALL, "");
     options.put(DockerCmdOption.FILTER, "status=running");
