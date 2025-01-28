@@ -1,7 +1,9 @@
+// init
 document.addEventListener('DOMContentLoaded', function () {
   initializeWebSocket();
 });
 
+// WebSocket 연결 설정
 function initializeWebSocket() {
   const socket = new SockJS('/ws-docker-monitor');
   const stompClient = Stomp.over(socket);
