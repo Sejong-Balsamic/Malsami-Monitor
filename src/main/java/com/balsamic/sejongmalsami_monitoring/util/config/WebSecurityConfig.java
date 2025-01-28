@@ -43,7 +43,7 @@ public class WebSecurityConfig {
     http
         .formLogin(formLogin -> formLogin
             // 커스텀 로그인 페이지 경로
-            .loginPage("/pages/login")
+            .loginPage("/login")
             // 실제 로그인을 처리할 URL (POST)
             .loginProcessingUrl("/login")
             // 로그인 성공시 이동할 페이지
