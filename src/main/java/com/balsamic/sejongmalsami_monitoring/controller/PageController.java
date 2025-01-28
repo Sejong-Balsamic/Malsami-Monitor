@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 @RequiredArgsConstructor
 public class PageController {
 
+  @GetMapping("/login")
+  public String loginPage() {
+    return "pages/login";
+  }
+
   @GetMapping("/dashboard")
   public String dashboardPage(Model model){
     return "pages/dashboard";

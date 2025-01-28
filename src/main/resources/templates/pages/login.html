@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: head(title='Dashboard')"></head>
+<body class="login-page">
+<div th:replace="fragments/header :: header"></div>
+
+<form th:action="@{/login}" method="post">
+  <input type="text" name="username" placeholder="ID"/>
+  <input type="password" name="password" placeholder="PW"/>
+  <button type="submit">로그인</button>
+</form>
+<!-- 스프링 시큐리티가 CSRF를 enable 했다면 아래 hidden 필드 자동 생성 or 직접 추가 필요 -->
+<!--<input type="hidden" name="_csrf" th:value="${_csrf.token}"/>-->
+
+<div th:replace="fragments/footer :: footer"></div>
+
+<!--<script th:src="@{/js/login.js}"></script>-->
+</body>
+</html>

@@ -2,6 +2,8 @@ server:
   port: 8089
   servlet:
     context-path: /
+    session:
+      timeout: 10m
   forward-headers-strategy: native
 
 spring:
