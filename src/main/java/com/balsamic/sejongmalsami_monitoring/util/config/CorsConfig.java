@@ -6,6 +6,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 @Configuration
 public class CorsConfig {
 
@@ -13,16 +15,28 @@ public class CorsConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
 
-    // 허용할 Origin 도메인 등록
-    config.addAllowedOrigin("*"); // 모든 Origin 허용 (보안상 특정 Origin만 허용 권장)
-    config.addAllowedMethod("*"); // 모든 HTTP Method 허용 (GET, POST, PUT, DELETE ...)
-    config.addAllowedHeader("*"); // 모든 HTTP Header 허용
+    // 허용할 Origin 목록
+    config.setAllowedOrigins(List.of(
+        "http://localhost:8089",
+        "https://monitor.sejong-malsami.co.kr",
+        "http://suh-project.synology.me:8089"
+    ));
+
+    // 모든 HTTP Method 허용 (GET, POST, PUT, DELETE 등)
+    config.setAllowedMethods(List.of("*"));
+
+    // 모든 HTTP Header 허용
+    config.setAllowedHeaders(List.of("*"));
+
+    // 자격 증명 허용 (쿠키, Authorization 헤더 포함)
     config.setAllowCredentials(true);
-    config.setMaxAge(3600L);      // Pre-flight 요청 캐싱 시간(1시간)
+
+    // Pre-flight 요청 캐싱 시간(1시간)
+    config.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    // 모든 패스에 대해 위 설정 적용
     source.registerCorsConfiguration("/**", config);
+
     return source;
   }
 }
